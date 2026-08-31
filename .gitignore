@@ -1,0 +1,16 @@
+build/
+out/
+.vs/
+.vscode/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.pdb
+*.ilk
+*.obj
+*.exe
+*.fillema.autosave
