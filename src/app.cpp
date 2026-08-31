@@ -786,12 +786,12 @@ void App::paintTimeline(HWND window, HDC context) {
     }
 
     const int left = 12;
-    const int right = std::max(left + 1, area.right - 12);
+    const int right = std::max(left + 1, static_cast<int>(area.right) - 12);
     const int usable = right - left;
     const int videoTop = 48;
-    const int videoBottom = std::max(videoTop + 52, (area.bottom + videoTop) / 2);
+    const int videoBottom = std::max(videoTop + 52, (static_cast<int>(area.bottom) + videoTop) / 2);
     const int audioTop = videoBottom + 8;
-    const int audioBottom = std::max(audioTop + 34, area.bottom - 12);
+    const int audioBottom = std::max(audioTop + 34, static_cast<int>(area.bottom) - 12);
 
     HPEN gridPen = CreatePen(PS_SOLID, 1, RGB(47, 48, 54));
     const HGDIOBJ previousPen = SelectObject(context, gridPen);
@@ -900,7 +900,7 @@ void App::paintSplash(HWND window, HDC context) {
     RECT area{};
     GetClientRect(window, &area);
     for (int x = 0; x < area.right; ++x) {
-        const double t = static_cast<double>(x) / std::max(1, area.right - 1);
+        const double t = static_cast<double>(x) / std::max(1, static_cast<int>(area.right) - 1);
         const int red = static_cast<int>(24 + t * 20);
         const int green = static_cast<int>(22 + t * 4);
         const int blue = static_cast<int>(30 + t * 18);
@@ -1551,7 +1551,7 @@ App::TimelineHit App::hitTimeline(HWND timelineWindow, int x, int y) const {
     if (project_.timeline.empty() || x < 12 || x > area.right - 12 || y < 28 || y > area.bottom) return hit;
     const double total = project_.timelineDuration();
     if (total <= 0.0) return hit;
-    hit.globalTime = std::clamp(static_cast<double>(x - 12) / std::max(1, area.right - 24) * total, 0.0, total);
+    hit.globalTime = std::clamp(static_cast<double>(x - 12) / std::max(1, static_cast<int>(area.right) - 24) * total, 0.0, total);
     double cursor = 0.0;
     for (std::size_t index = 0; index < project_.timeline.size(); ++index) {
         const Clip& clip = project_.timeline[index];
@@ -1882,7 +1882,7 @@ void App::buildInspector() {
     clearInspector();
     RECT area{};
     GetClientRect(inspectorWindow_, &area);
-    const int tabWidth = std::max(44, (area.right - 14) / 6);
+    const int tabWidth = std::max(44, (static_cast<int>(area.right) - 14) / 6);
     const std::array<std::pair<const wchar_t*, int>, 6> tabs{{
         {L"기본색", ID_TAB_COLOR_BASIC}, {L"정밀색", ID_TAB_COLOR_PRECISE}, {L"클립", ID_TAB_CLIP},
         {L"오디오", ID_TAB_AUDIO}, {L"텍스트", ID_TAB_TEXT}, {L"출력", ID_TAB_EXPORT}

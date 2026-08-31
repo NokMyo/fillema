@@ -36,6 +36,8 @@ if(WIN32)
         _UNICODE
         NOMINMAX
         WIN32_LEAN_AND_MEAN
+        WINVER=0x0A00
+        _WIN32_WINNT=0x0A00
         FILLEMA_VERSION=L"0.1.0"
     )
     target_link_libraries(Fillema PRIVATE
