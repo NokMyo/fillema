@@ -70,6 +70,14 @@ jobs:
           }
           $lines | Set-Content -Encoding ascii SHA256SUMS.txt
 
+      - name: Point v0.1 tag at verified build
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag --force v0.1 $env:GITHUB_SHA
+          git push origin refs/tags/v0.1 --force
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
@@ -79,6 +87,7 @@ jobs:
           body_path: RELEASE_NOTES.md
           prerelease: true
           make_latest: false
+          overwrite_files: true
           files: |
             Fillema-v0.1-Windows-x64.zip
             Fillema-v0.1-Windows-x64-lite.zip
