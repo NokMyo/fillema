@@ -111,6 +111,12 @@ void SetControlText(HWND window, const std::wstring& text) {
     if (window) SetWindowTextW(window, text.c_str());
 }
 
+template <typename T>
+void PostCompletion(HWND target, UINT message, std::unique_ptr<T> completion) {
+    T* raw = completion.release();
+    if (!PostMessageW(target, message, 0, reinterpret_cast<LPARAM>(raw))) delete raw;
+}
+
 } // namespace
 
 App::App(HINSTANCE instance) : instance_(instance) {
@@ -732,6 +738,10 @@ LRESULT App::handleMessage(HWND window, UINT message, WPARAM wParam, LPARAM lPar
                 InvalidateRect(stillWindow_, nullptr, FALSE);
                 setStatus(L"정확 색감 미리보기 · 최종 출력과 같은 색 처리");
             }
+        }
+        if (completion) {
+            std::error_code error;
+            std::filesystem::remove(completion->path, error);
         }
         return 0;
     }
@@ -1497,7 +1507,7 @@ void App::probeMedia(std::int64_t mediaId, std::filesystem::path path) {
         const ProcessResult result = RunHiddenProcess(executable, BuildProbeArguments(path));
         if (result.started && result.exitCode == 0) completion->info = ParseProbeOutput(result.output);
         else completion->error = result.error.empty() ? Utf8ToWide(result.output) : result.error;
-        PostMessageW(target, WM_FILLEMA_PROBE_COMPLETE, 0, reinterpret_cast<LPARAM>(completion.release()));
+        PostCompletion(target, WM_FILLEMA_PROBE_COMPLETE, std::move(completion));
     });
 }
 
@@ -1511,7 +1521,7 @@ void App::maybeCreateProxy(std::int64_t mediaId, const MediaItem& media) {
         completion->mediaId = mediaId;
         completion->path = proxy;
         completion->success = true;
-        PostMessageW(mainWindow_, WM_FILLEMA_PROXY_COMPLETE, 0, reinterpret_cast<LPARAM>(completion.release()));
+        PostCompletion(mainWindow_, WM_FILLEMA_PROXY_COMPLETE, std::move(completion));
         return;
     }
     const std::filesystem::path executable = ffmpegPath_;
@@ -1524,7 +1534,7 @@ void App::maybeCreateProxy(std::int64_t mediaId, const MediaItem& media) {
         completion->path = proxy;
         const ProcessResult result = RunHiddenProcess(executable, BuildProxyArguments(input, proxy, profile));
         completion->success = result.started && result.exitCode == 0 && std::filesystem::exists(proxy);
-        PostMessageW(target, WM_FILLEMA_PROXY_COMPLETE, 0, reinterpret_cast<LPARAM>(completion.release()));
+        PostCompletion(target, WM_FILLEMA_PROXY_COMPLETE, std::move(completion));
     });
     setStatus(L"성능용 편집본을 백그라운드에서 만들고 있습니다. UI는 계속 사용할 수 있습니다.");
 }
@@ -2050,7 +2060,7 @@ void App::renderAccuratePreview() {
             mediaCopy, clipCopy, position, output, profile.previewWidth, profile.previewHeight, false));
         completion->success = result.started && result.exitCode == 0 && std::filesystem::exists(output);
         completion->error = result.error.empty() ? Utf8ToWide(result.output) : result.error;
-        PostMessageW(target, WM_FILLEMA_PREVIEW_READY, 0, reinterpret_cast<LPARAM>(completion.release()));
+        PostCompletion(target, WM_FILLEMA_PREVIEW_READY, std::move(completion));
     });
 }
 
@@ -2130,7 +2140,7 @@ void App::beginExport(const std::filesystem::path& outputPath) {
         }
         std::error_code error;
         std::filesystem::remove(script, error);
-        PostMessageW(target, WM_FILLEMA_EXPORT_COMPLETE, 0, reinterpret_cast<LPARAM>(completion.release()));
+        PostCompletion(target, WM_FILLEMA_EXPORT_COMPLETE, std::move(completion));
     });
 }
 

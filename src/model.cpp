@@ -345,8 +345,10 @@ std::vector<ValidationIssue> ValidateProject(Project& project) {
             issues.push_back({ValidationIssue::Severity::Error, "원본 미디어를 찾을 수 없는 클립이 있습니다."});
             continue;
         }
-        clip.inPoint = Clamp(clip.inPoint, 0.0, std::max(0.0, media->duration));
-        const double maximumOut = media->duration > 0.0 ? media->duration : std::max(clip.outPoint, 0.1);
+        const double maximumOut = media->duration > 0.0
+            ? std::max(0.01, media->duration)
+            : std::max({clip.outPoint, clip.inPoint + 0.01, 0.1});
+        clip.inPoint = Clamp(clip.inPoint, 0.0, std::max(0.0, maximumOut - 0.01));
         clip.outPoint = Clamp(clip.outPoint, clip.inPoint + 0.01, maximumOut);
         clip.speed = Clamp(clip.speed, 0.1, 8.0);
         auto& color = clip.color;

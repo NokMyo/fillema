@@ -138,12 +138,15 @@ ProcessResult RunHiddenProcess(
 
     STARTUPINFOW startup{};
     startup.cb = sizeof(startup);
+    Handle nullInput;
     if (captureOutput) {
+        nullInput.reset(CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+            &security, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
         startup.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
         startup.wShowWindow = SW_HIDE;
         startup.hStdOutput = writePipe.get();
         startup.hStdError = writePipe.get();
-        startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+        startup.hStdInput = nullInput ? nullInput.get() : GetStdHandle(STD_INPUT_HANDLE);
     } else {
         startup.dwFlags = STARTF_USESHOWWINDOW;
         startup.wShowWindow = SW_HIDE;
