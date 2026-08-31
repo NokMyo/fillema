@@ -1,8 +1,6 @@
 #include <windows.h>
 #include "../src/resource.h"
 
-1 RT_MANIFEST "fillema.manifest"
-
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION 0,1,0,0
  PRODUCTVERSION 0,1,0,0
@@ -35,4 +33,3 @@ BEGIN
         VALUE "Translation", 0x0412, 1200
     END
 END
-

@@ -298,15 +298,19 @@ ExportPlan BuildExportPlan(
         const std::string number = std::to_string(index);
         plan.filterComplex += '[' + number + ":v]" + VideoFilter(
             clip, project.output.width, project.output.height, outputFps, true, false) + "[v" + number + "];\n";
-        if (media && media->hasAudio) {
-            plan.filterComplex += '[' + number + ":a]" + AudioFilter(clip, clip.timelineDuration()) + "[a" + number + "];\n";
-        } else {
-            plan.filterComplex += "anullsrc=channel_layout=stereo:sample_rate=48000,atrim=duration="
-                + Decimal(clip.timelineDuration()) + "[a" + number + "];\n";
+        if (project.output.preserveAudio) {
+            if (media && media->hasAudio) {
+                plan.filterComplex += '[' + number + ":a]" + AudioFilter(clip, clip.timelineDuration()) + "[a" + number + "];\n";
+            } else {
+                plan.filterComplex += "anullsrc=channel_layout=stereo:sample_rate=48000,atrim=duration="
+                    + Decimal(clip.timelineDuration()) + "[a" + number + "];\n";
+            }
         }
-        concatInputs += "[v" + number + "][a" + number + ']';
+        concatInputs += "[v" + number + ']';
+        if (project.output.preserveAudio) concatInputs += "[a" + number + ']';
     }
-    plan.filterComplex += concatInputs + "concat=n=" + std::to_string(project.timeline.size()) + ":v=1:a=1[vout][aout]\n";
+    plan.filterComplex += concatInputs + "concat=n=" + std::to_string(project.timeline.size())
+        + (project.output.preserveAudio ? ":v=1:a=1[vout][aout]\n" : ":v=1:a=0[vout]\n");
 
     plan.arguments.insert(plan.arguments.end(), {
         "-filter_complex_script", PathToUtf8(filterScriptPath),

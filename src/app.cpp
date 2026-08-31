@@ -688,6 +688,11 @@ LRESULT App::handleMessage(HWND window, UINT message, WPARAM wParam, LPARAM lPar
                     media->duration = completion->info.duration;
                     media->hasAudio = completion->info.hasAudio;
                     media->probeComplete = true;
+                    if (project_.media.size() == 1 && project_.output.width == 1920 && project_.output.height == 1080) {
+                        project_.output.width = media->width;
+                        project_.output.height = media->height;
+                        project_.output.fps = media->fps;
+                    }
                     for (auto& clip : project_.timeline) {
                         if (clip.mediaId == media->id && (clip.outPoint <= 5.001 || std::abs(clip.outPoint - previousDuration) < 0.01)) {
                             clip.outPoint = media->duration;
@@ -1017,6 +1022,9 @@ void App::handleCommand(int id, int notification, HWND source) {
                 ? &project_.media[static_cast<std::size_t>(selectedMediaIndex_)] : nullptr);
         markDirty();
         setStatus(Utf8ToWide(adaptiveProfile_.label) + L" · " + Utf8ToWide(adaptiveProfile_.reason));
+        for (const auto& media : project_.media) {
+            if (media.probeComplete && !media.proxyReady) maybeCreateProxy(media.id, media);
+        }
         return;
     }
     if (id == ID_COMMAND_EDIT && notification == EN_CHANGE) {
@@ -1179,8 +1187,9 @@ void App::handleDrop(HDROP drop) {
     std::vector<std::filesystem::path> paths;
     for (UINT index = 0; index < count; ++index) {
         const UINT length = DragQueryFileW(drop, index, nullptr, 0);
-        std::wstring path(static_cast<std::size_t>(length), L'\0');
+        std::wstring path(static_cast<std::size_t>(length) + 1, L'\0');
         DragQueryFileW(drop, index, path.data(), length + 1);
+        path.resize(length);
         paths.emplace_back(std::move(path));
     }
     DragFinish(drop);

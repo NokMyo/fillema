@@ -122,6 +122,12 @@ void TestFiltersAndExport() {
     Require(plan.filterComplex.find("drawtext=") != std::string::npos, "text overlay graph missing");
     Require(plan.filterComplex.find("loudnorm=") != std::string::npos, "normalization graph missing");
     Require(!plan.arguments.empty() && plan.arguments.back() == "out.mp4", "output path missing");
+
+    auto silentProject = project;
+    silentProject.output.preserveAudio = false;
+    const auto silentPlan = fillema::BuildExportPlan(silentProject, "filters.txt", "silent.mp4");
+    Require(silentPlan.filterComplex.find("concat=n=1:v=1:a=0") != std::string::npos, "silent concat graph is invalid");
+    Require(silentPlan.filterComplex.find("[aout]") == std::string::npos, "silent export leaves an audio output connected");
 }
 
 } // namespace
